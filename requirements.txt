@@ -1,0 +1,36 @@
+# The Hive - Multi-Agent AI Adversary Emulation Pipeline
+# Core dependencies
+crewai>=1.14.0
+crewai-tools>=0.40.0
+
+# LLM
+langchain-ollama>=0.3.0
+
+# Configuration
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# CLI & Output
+rich>=13.0
+
+# MITRE ATT&CK
+mitreattack-python>=0.2.0
+stix2>=3.0
+
+# Detection Engineering
+pysigma>=0.11.0
+
+# Atomic Red Team execution
+atomic-operator>=0.8.0
+
+# HTTP
+requests>=2.31
+
+# Data handling
+jinja2>=3.1
+pywebview>=4.4.1  
+windows-curses>=2.3.0
+pick==1.6.0
+
+
+ 

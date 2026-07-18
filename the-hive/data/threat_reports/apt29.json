@@ -1,0 +1,22 @@
+{
+  "threat_actor": "APT29",
+  "aliases": ["Cozy Bear", "The Dukes", "Midnight Blizzard", "Nobelium"],
+  "origin": "Russia",
+  "targets": ["Government", "Healthcare", "Think Tanks", "Technology", "Defense"],
+  "tools": ["Cobalt Strike", "mimikatz", "PowerShell Empire", "WellMess", "EnvyScout"],
+  "report_text": "APT29, also known as Cozy Bear and attributed to Russia's Foreign Intelligence Service (SVR), has been observed conducting sophisticated cyber espionage campaigns targeting Western government agencies and healthcare organizations. In recent campaigns, the group has leveraged spearphishing emails with malicious HTML attachments (EnvyScout) that use HTML smuggling to deliver ISO files containing malicious LNK files and DLL payloads.\n\nUpon execution, the malware establishes persistence through Windows Registry Run keys and scheduled tasks. APT29 heavily utilizes PowerShell for command execution, often employing encoded commands and obfuscation to evade detection. The group conducts systematic network reconnaissance using built-in Windows utilities such as nltest, net view, and systeminfo to enumerate domain controllers and map the Active Directory environment.\n\nFor lateral movement, APT29 relies on pass-the-hash techniques and remote service exploitation (SMB, WinRM) to move through the network toward high-value targets such as mail servers and domain controllers. Data is staged in temporary directories and exfiltrated over encrypted HTTPS channels to adversary-controlled infrastructure, often using legitimate cloud services to blend with normal traffic.",
+  "known_techniques": [
+    "T1566.001",
+    "T1059.001",
+    "T1547.001",
+    "T1053.005",
+    "T1082",
+    "T1018",
+    "T1016",
+    "T1550.002",
+    "T1021.002",
+    "T1048.002",
+    "T1027",
+    "T1070.004"
+  ]
+}

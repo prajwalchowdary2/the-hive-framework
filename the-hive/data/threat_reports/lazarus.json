@@ -1,0 +1,24 @@
+{
+  "threat_actor": "Lazarus Group",
+  "aliases": ["HIDDEN COBRA", "Zinc", "Diamond Sleet", "Labyrinth Chollima"],
+  "origin": "North Korea",
+  "targets": ["Cryptocurrency", "Financial Institutions", "Defense", "Aerospace", "Technology"],
+  "tools": ["BLINDINGCAN", "AppleJeus", "DTrack", "COPPERHEDGE", "Custom loaders"],
+  "report_text": "Lazarus Group, attributed to North Korea's Reconnaissance General Bureau (RGB), continues to be one of the most prolific state-sponsored threat actors. In 2024-2025 campaigns, the group has targeted cryptocurrency exchanges and DeFi platforms through supply chain attacks, trojanized developer tools, and social engineering of developers via fake job offers on LinkedIn.\n\nThe initial access vector typically involves spearphishing with malicious documents or trojanized applications. Once inside the network, Lazarus deploys custom backdoors that communicate over HTTP/HTTPS and establish persistence through Windows services and registry modifications. The group uses PowerShell and cmd.exe extensively for execution, often downloading additional payloads from compromised legitimate websites.\n\nLazarus conducts thorough network reconnaissance using tools like systeminfo, ipconfig, net user, and tasklist to understand the target environment. For lateral movement, the group leverages RDP sessions and SMB file shares, often using stolen credentials obtained through credential dumping. The ultimate objective is financial theft — the group stages cryptocurrency wallet files and financial data before exfiltrating through custom C2 channels using DNS tunneling and HTTPS.",
+  "known_techniques": [
+    "T1566.001",
+    "T1566.002",
+    "T1059.001",
+    "T1059.003",
+    "T1547.001",
+    "T1543.003",
+    "T1082",
+    "T1016",
+    "T1018",
+    "T1021.001",
+    "T1021.002",
+    "T1041",
+    "T1048",
+    "T1027"
+  ]
+}

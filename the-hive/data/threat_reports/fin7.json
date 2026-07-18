@@ -1,0 +1,24 @@
+{
+  "threat_actor": "FIN7",
+  "aliases": ["Carbanak", "Carbon Spider", "Sangria Tempest", "ELBRUS"],
+  "origin": "Eastern Europe",
+  "targets": ["Retail", "Hospitality", "Financial Services", "Restaurant Chains"],
+  "tools": ["Carbanak", "GRIFFON", "HALFBAKED", "Cobalt Strike", "POWERPLANT"],
+  "report_text": "FIN7, also known as Carbanak Group, is a financially-motivated threat actor that has stolen over $1 billion from banks, retail chains, and hospitality companies worldwide. The group has evolved from POS malware operations to sophisticated ransomware deployment and supply chain compromises.\n\nFIN7's primary initial access vector is highly targeted spearphishing emails crafted to appear as legitimate business correspondence — often disguised as food safety complaints to restaurant chains or customer inquiries to retail companies. These emails contain malicious Word documents or LNK files that execute PowerShell downloaders. The group has also been observed using USB devices (BadUSB) mailed to targets disguised as gift cards.\n\nOnce inside, FIN7 establishes persistence through scheduled tasks and registry modifications. They use PowerShell heavily for execution, deploying their custom POWERPLANT and GRIFFON backdoors. Network discovery is performed methodically using net commands and custom scripts to identify POS systems and financial databases. Lateral movement is achieved through RDP and Windows admin shares with compromised credentials. Data collection focuses on payment card data from POS systems and financial records, which are exfiltrated over encrypted C2 channels.",
+  "known_techniques": [
+    "T1566.001",
+    "T1566.002",
+    "T1059.001",
+    "T1059.003",
+    "T1547.001",
+    "T1053.005",
+    "T1082",
+    "T1018",
+    "T1021.001",
+    "T1021.002",
+    "T1550.002",
+    "T1041",
+    "T1074.001",
+    "T1027"
+  ]
+}

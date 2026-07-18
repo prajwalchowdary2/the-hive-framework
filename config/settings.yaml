@@ -1,0 +1,41 @@
+# The Hive - Configuration
+# ========================
+
+# LLM Settings
+model: "llama3.3:70b"
+ollama_base_url: "http://localhost:11434"
+temperature: 0.3
+max_tokens: 4096
+
+# Paths
+output_dir: "./output"
+attck_data_path: "./data/attck_data/enterprise-attack.json"
+atomic_red_team_path: "./data/atomic-red-team/atomics"
+threat_reports_dir: "./data/threat_reports"
+
+# Execution Settings
+execute_atomics: true          # Set false for simulation-only mode
+safe_mode: true                # Extra safety checks before atomic execution
+max_techniques_per_phase: 5    # Limit techniques per kill chain phase
+
+# Logging
+log_level: "INFO"
+log_file: "./output/hive.log"
+
+# Target Environment (for simulation context)
+target_environment:
+  os: "windows"
+  domain: "lab.local"
+  hosts:
+    - name: "WS01"
+      role: "workstation"
+      os: "Windows 11"
+    - name: "DC01"
+      role: "domain_controller"
+      os: "Windows Server 2022"
+    - name: "FS01"
+      role: "file_server"
+      os: "Windows Server 2022"
+    - name: "DB01"
+      role: "database_server"
+      os: "Windows Server 2022"

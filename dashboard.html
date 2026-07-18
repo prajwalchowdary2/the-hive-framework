@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE HIVE — Advanced Emulation</title>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Fira+Code:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ========== RESET & BASE ========== */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  /* Renamed visually to Crimson, keeping var name for CSS compatibility */
+  --steel: #b83b3b; 
+  --steel-dim: rgba(184,59,59,0.2);
+  --steel-glow: 0 0 15px rgba(184,59,59,0.3);
+  --muted-green: #678c73;
+  --muted-red: #c41a1a;
+  --muted-amber: #b8863b;
+  --bg: #0a0606;       /* Warm Obsidian background */
+  --panel: rgba(20, 13, 13, 0.65);  /* More transparent for glass effect */
+  --border: #2e1d1d;   /* Warm dark borders */
+  --text: #a69c9c;     /* Warm grey text */
+  --text-bright: #f0e6e6; 
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Fira Code', monospace;
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+
+::selection { background: var(--steel); color: var(--bg); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--steel-dim); border-radius: 3px; }
+
+/* ========== MATRIX RAIN CANVAS ========== */
+#matrix-canvas {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 0; opacity: 0.6; pointer-events: none;
+}
+
+/* ========== SCAN LINES OVERLAY ========== */
+.scanlines {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 1; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(125,146,166,0.02) 2px,
+    rgba(125,146,166,0.02) 4px
+  );
+}
+
+/* ========== GRID OVERLAY ========== */
+.grid-overlay {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  z-index: 0; pointer-events: none; opacity: 0.08;
+  background-image:
+    linear-gradient(var(--steel) 1px, transparent 1px),
+    linear-gradient(90deg, var(--steel) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridScroll 20s linear infinite;
+}
+@keyframes gridScroll {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(60px, 60px); }
+}
+
+/* ========== MAIN CONTENT ========== */
+main { position: relative; z-index: 2; padding-top: 60px; }
+
+/* ========== NAVIGATION BAR ========== */
+.top-nav {
+  position: fixed; top: 0; left: 0; width: 100%;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 40px; z-index: 1000;
+  background: rgba(10, 6, 6, 0.8);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-brand { font-family: 'Chakra Petch', sans-serif; font-weight: 700; color: var(--steel); font-size: 1.2rem; letter-spacing: 2px; }
+.nav-links { display: flex; gap: 30px; }
+.nav-links a {
+  color: var(--text); text-decoration: none; font-size: 0.8rem; font-family: 'Space Mono', monospace;
+  font-weight: 700; letter-spacing: 2px; transition: all 0.3s;
+}
+.nav-links a:hover { color: var(--text-bright); text-shadow: 0 0 10px rgba(240,230,230,0.5); }
+
+/* ========== HERO SECTION ========== */
+.hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; text-align: center;
+  padding: 2rem;
+}
+
+.hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 18px; border: 1px solid var(--steel-dim);
+  border-radius: 2px; font-size: 0.75rem;
+  color: var(--steel); text-transform: uppercase;
+  letter-spacing: 3px; margin-bottom: 2rem;
+  background: var(--panel);
+  animation: pulse-border 3s ease-in-out infinite;
+}
+.hero-badge::before {
+  content: ''; width: 6px; height: 6px;
+  background: var(--steel); border-radius: 50%;
+  animation: blink 1s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+@keyframes pulse-border {
+  0%,100% { border-color: var(--steel-dim); box-shadow: none; }
+  50% { border-color: var(--steel); box-shadow: var(--steel-glow); }
+}
+
+@keyframes glitch-in {
+  0% { opacity: 0; transform: scale(1.1) skew(15deg); filter: blur(5px); }
+  10% { opacity: 1; transform: scale(1) skew(-10deg); text-shadow: 10px 0 red, -10px 0 cyan; filter: blur(0); }
+  20% { opacity: 0; transform: scale(1.05) skew(5deg); }
+  30% { opacity: 1; transform: scale(1) skew(-5deg); text-shadow: -5px 0 red, 5px 0 cyan; }
+  40% { opacity: 0; transform: skew(0); }
+  50% { opacity: 1; text-shadow: 2px 0 red, -2px 0 cyan; }
+  60% { opacity: 0; }
+  70% { opacity: 1; }
+  80% { opacity: 0.5; }
+  100% { opacity: 1; transform: scale(1); text-shadow: none; }
+}
+.hero-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(3.5rem, 8vw, 7.5rem);
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 1rem;
+  position: relative;
+  text-transform: uppercase;
+  animation: glitch-in 0.8s ease-out both;
+}
+.hero-title .the { color: var(--text); opacity: 0.5; font-size: 0.35em; display: block; letter-spacing: 15px; }
+
+@keyframes hive-pulse {
+  0%, 100% { text-shadow: 0 0 10px rgba(184,59,59,0.2), 0 0 20px rgba(184,59,59,0.1); }
+  50% { text-shadow: 0 0 20px rgba(204,0,0,0.8), 0 0 40px rgba(204,0,0,0.6), 0 0 60px rgba(204,0,0,0.4); }
+}
+
+@keyframes cyber-shake {
+  0%, 92%, 100% { transform: translate(0, 0) skew(0deg); }
+  93% { transform: translate(-4px, 3px) skew(3deg); color: #ff0000; text-shadow: 2px 2px 0px #00ffcc; }
+  95% { transform: translate(4px, -3px) skew(-3deg); color: #ffffff; text-shadow: -2px -2px 0px #ff0000; }
+  97% { transform: translate(-3px, -4px) skew(2deg); color: var(--steel); }
+  99% { transform: translate(3px, 4px) skew(-2deg); }
+}
+
+.hero-title .hive {
+  color: var(--text-bright);
+  position: relative;
+  animation: hive-pulse 3s infinite ease-in-out, cyber-shake 5s infinite;
+  display: inline-block;
+}
+
+/* Aggressive Cyberpunk Glitch effect */
+.hero-title .hive::before,
+.hero-title .hive::after {
+  content: 'HIVE';
+  position: absolute; left: 0; top: 0;
+  width: 100%; height: 100%;
+  color: var(--text-bright);
+  opacity: 0.9;
+  z-index: -1;
+}
+.hero-title .hive::before {
+  animation: glitch-1 3.5s infinite linear alternate-reverse;
+  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+}
+.hero-title .hive::after {
+  animation: glitch-2 3.5s infinite linear alternate-reverse;
+  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+}
+@keyframes glitch-1 {
+  0%,90%,100% { transform: translate(0); text-shadow: none; }
+  92% { transform: translate(-12px, -2px); text-shadow: -3px 0 var(--muted-red); }
+  94% { transform: translate(12px, 2px); text-shadow: 3px 0 #00ffff; }
+  96% { transform: translate(-6px, 1px); text-shadow: -2px 0 var(--muted-red); }
+}
+@keyframes glitch-2 {
+  0%,90%,100% { transform: translate(0); text-shadow: none; }
+  91% { transform: translate(12px, 2px); text-shadow: 3px 0 #00ffff; }
+  93% { transform: translate(-12px, -2px); text-shadow: -3px 0 var(--muted-red); }
+  95% { transform: translate(6px, -1px); text-shadow: 3px 0 #00ffff; }
+}
+
+.hero-subtitle {
+  font-size: 0.9rem; color: var(--text); opacity: 0.8;
+  max-width: 600px; margin: 0 auto 2.5rem;
+  letter-spacing: 1px; line-height: 1.8;
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  animation: float 3s ease-in-out infinite;
+}
+.scroll-indicator span { font-size: 0.65rem; color: var(--steel); letter-spacing: 4px; text-transform: uppercase; opacity: 0.6; }
+.scroll-indicator .arrow {
+  width: 15px; height: 15px; border-right: 2px solid var(--steel); border-bottom: 2px solid var(--steel);
+  transform: rotate(45deg); opacity: 0.6;
+}
+@keyframes float {
+  0%,100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(10px); }
+}
+
+/* ========== TERMINAL TICKER ========== */
+.ticker-wrap {
+  overflow: hidden; background: var(--panel);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+}
+.ticker {
+  display: flex; white-space: nowrap;
+  animation: ticker-scroll 45s linear infinite;
+}
+.ticker span {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.8rem; color: var(--text-bright); opacity: 0.8;
+  padding: 0 40px; border-right: 1px solid var(--border);
+}
+.ticker span.red { color: var(--muted-red); }
+.ticker span.amber { color: var(--muted-amber); }
+.ticker span.cyan { color: var(--steel); }
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* ========== SECTIONS ========== */
+section { padding: 6rem 2rem; max-width: 1300px; margin: 0 auto; }
+
+.section-header {
+  text-align: center; margin-bottom: 4rem;
+}
+.section-tag {
+  font-size: 0.75rem; letter-spacing: 5px; text-transform: uppercase;
+  color: var(--steel); margin-bottom: 0.8rem; display: block;
+}
+.section-title {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700; color: var(--text-bright);
+}
+.section-line {
+  width: 80px; height: 1px; background: var(--border);
+  margin: 1.5rem auto 0; position: relative;
+}
+.section-line::after {
+  content: ''; position: absolute; top:-2px; left: 0;
+  width: 5px; height: 5px; background: var(--steel);
+  animation: scan-dot 4s ease-in-out infinite;
+}
+@keyframes scan-dot { 0%,100% { left:0; } 50% { left: 75px; } }
+
+/* ========== PIPELINE FLOW ========== */
+.pipeline {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 0;
+}
+.pipeline-step {
+  width: 140px; text-align: center; position: relative;
+  padding: 1.5rem 0.5rem;
+  opacity: 0; transform: translateY(30px);
+  transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.pipeline-step.visible { opacity: 1; transform: translateY(0); }
+.pipeline-step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -8px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--steel); font-size: 1.2rem; opacity: 0.4;
+}
+.pipeline-icon {
+  width: 65px; height: 65px; margin: 0 auto 1rem;
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; font-family: 'Space Mono', monospace; font-weight: 700;
+  color: var(--steel); letter-spacing: 1px;
+  position: relative; background: var(--panel);
+  transition: all 0.3s;
+}
+.pipeline-step:hover .pipeline-icon {
+  border-color: var(--steel);
+  box-shadow: var(--steel-glow);
+  transform: translateY(-3px);
+  color: var(--text-bright);
+}
+.pipeline-label {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--text);
+}
+
+/* ========== STATS BAR ========== */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem; margin: 4rem 0;
+}
+.stat-card {
+  background: var(--panel); border: 1px solid var(--border);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 2.5rem 1.5rem; text-align: center; position: relative;
+  overflow: hidden;
+  opacity: 0; transform: scale(0.95);
+  transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.stat-card:hover { transform: translateY(-5px) scale(1); border-color: var(--steel-dim); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.stat-card.visible { opacity: 1; transform: scale(1); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0;
+  width: 100%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--steel), transparent);
+  animation: scanline-h 4s linear infinite;
+}
+@keyframes scanline-h { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.stat-number {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 3rem; font-weight: 700;
+  color: var(--text-bright);
+}
+.stat-number.green { color: var(--muted-green); }
+.stat-number.red { color: var(--muted-red); }
+.stat-number.amber { color: var(--muted-amber); }
+.stat-label {
+  font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--text); margin-top: 0.8rem;
+}
+
+/* ========== AGENT CARDS ========== */
+.agents-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+.agent-card {
+  background: var(--panel); border: 1px solid var(--border);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 2rem; position: relative; overflow: hidden;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.agent-card.visible { opacity: 1; transform: translateY(0); }
+.agent-card:hover {
+  border-color: var(--steel-dim);
+  background: rgba(20, 23, 29, 0.8);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+}
+.agent-card .corner-tag {
+  position: absolute; top: 0; right: 0;
+  padding: 5px 15px; font-size: 0.65rem;
+  background: var(--border); color: var(--text);
+  font-weight: 600; letter-spacing: 1px;
+}
+/* Active Simulation State */
+.agent-card.active-sim {
+  border-color: #00ffff;
+  background: rgba(0, 255, 255, 0.05);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+  transform: scale(1.02);
+  animation: cyber-shake 4s infinite;
+  z-index: 10;
+}
+.agent-card.active-sim .agent-icon {
+  color: #00ffff; border-color: #00ffff; text-shadow: 0 0 10px #00ffff;
+}
+.agent-icon { 
+  display: inline-block; font-family: 'Space Mono', monospace;
+  font-size: 0.9rem; font-weight: 700; color: var(--steel);
+  padding: 6px 12px; border: 1px solid var(--border);
+  background: var(--bg); margin-bottom: 1.2rem;
+  letter-spacing: 2px;
+}
+.agent-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.2rem; font-weight: 700;
+  color: var(--text-bright); margin-bottom: 0.4rem;
+}
+.agent-role {
+  font-size: 0.75rem; color: var(--text);
+  text-transform: uppercase; letter-spacing: 2px;
+  margin-bottom: 1rem; border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+.agent-desc {
+  font-size: 0.8rem; line-height: 1.8;
+  color: var(--text); opacity: 0.8;
+}
+
+/* ========== TERMINAL / LOG SECTION ========== */
+.terminal-window {
+  max-width: 950px; margin: 0 auto;
+  background: rgba(7, 8, 10, 0.85); border: 1px solid var(--border);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  opacity: 0; transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.terminal-window.visible { opacity: 1; transform: translateY(0); }
+.terminal-bar {
+  padding: 12px 20px; background: #0c0d12;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Space Mono', monospace;
+  font-size: 0.75rem; color: var(--text); letter-spacing: 1px;
+  display: flex; justify-content: space-between;
+}
+.terminal-body {
+  padding: 2rem; font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; line-height: 2; max-height: 500px;
+  overflow-y: auto; position: relative;
+}
+/* Cyberpunk Scrollbar for Terminal */
+.terminal-body::-webkit-scrollbar { width: 8px; }
+.terminal-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-left: 1px solid var(--border); }
+.terminal-body::-webkit-scrollbar-thumb { background: var(--steel-dim); }
+.terminal-body::-webkit-scrollbar-thumb:hover { background: var(--muted-red); }
+
+.t-green { color: var(--muted-green); }
+.t-cyan { color: var(--steel); }
+.t-red { color: var(--muted-red); }
+.t-amber { color: var(--muted-amber); }
+.t-dim { color: #4a5160; }
+.t-white { color: var(--text-bright); }
+
+.terminal-line {
+  opacity: 0; transform: translateX(-10px);
+  animation: type-in 0.2s ease forwards;
+}
+.terminal-body .cursor-blink::after {
+  content: '█'; animation: cursor 1s step-end infinite; color: var(--steel);
+}
+@keyframes type-in { to { opacity: 1; transform: translateX(0); } }
+
+/* ========== COVERAGE SECTION ========== */
+.coverage-bars { max-width: 800px; margin: 0 auto; }
+.coverage-item {
+  margin-bottom: 1.8rem;
+  opacity: 0; transform: translateX(-20px);
+  transition: all 0.6s ease;
+}
+.coverage-item.visible { opacity: 1; transform: translateX(0); }
+.coverage-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.6rem;
+}
+.coverage-name { font-size: 0.85rem; color: var(--text-bright); letter-spacing: 1px; }
+.coverage-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem; font-weight: 700;
+}
+.coverage-track {
+  width: 100%; height: 2px; background: var(--border);
+  position: relative;
+}
+.coverage-fill {
+  height: 100%; width: 0;
+  transition: width 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+}
+.coverage-fill::after {
+  content: ''; position: absolute; right: 0; top: -3px;
+  width: 8px; height: 8px; background: inherit;
+}
+.coverage-fill.cyan { background: var(--steel); }
+.coverage-fill.green { background: var(--muted-green); }
+.coverage-fill.amber { background: var(--muted-amber); }
+.coverage-fill.red { background: var(--muted-red); }
+
+/* ========== THREAT ACTORS ========== */
+.threat-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+.threat-card {
+  background: var(--panel); border: 1px solid var(--border);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  padding: 2.5rem; position: relative; overflow: hidden;
+  opacity: 0; transform: translateY(20px);
+  transition: all 0.4s ease;
+}
+.threat-card.visible { opacity: 1; transform: translateY(0); }
+.threat-card:hover { border-color: var(--muted-red); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(196,26,26,0.1); }
+.threat-flag { 
+  font-family: 'Space Mono', monospace; font-size: 1rem; 
+  font-weight: 700; color: var(--text); margin-bottom: 1rem; 
+  letter-spacing: 2px;
+}
+.threat-name {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.4rem; font-weight: 700; color: var(--text-bright);
+  margin-bottom: 0.4rem;
+}
+.threat-origin { font-size: 0.75rem; color: var(--muted-red); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1.5rem; }
+.threat-techniques {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.technique-tag {
+  padding: 4px 10px; font-size: 0.7rem;
+  background: rgba(158,91,91,0.05); border: 1px solid rgba(158,91,91,0.2);
+  color: var(--text); font-family: 'Space Mono', monospace;
+}
+
+/* ========== DATA STREAM ========== */
+.data-stream {
+  position: fixed; right: 20px; top: 0; width: 30px; height: 100%;
+  z-index: 1; pointer-events: none; overflow: hidden; opacity: 0.2;
+}
+.hex-column {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem; color: var(--steel);
+  line-height: 1.5; writing-mode: vertical-rl;
+  animation: hex-scroll 40s linear infinite;
+  white-space: nowrap;
+}
+@keyframes hex-scroll { 0% { transform: translateY(-50%); } 100% { transform: translateY(0); } }
+
+.data-stream-left {
+  position: fixed; left: 20px; top: 0; width: 30px; height: 100%;
+  z-index: 1; pointer-events: none; overflow: hidden; opacity: 0.15;
+}
+.hex-column-left {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem; color: var(--text);
+  line-height: 1.5; writing-mode: vertical-rl;
+  animation: hex-scroll-up 35s linear infinite;
+  white-space: nowrap;
+}
+@keyframes hex-scroll-up { 0% { transform: translateY(0); } 100% { transform: translateY(-50%); } }
+
+/* ========== FOOTER ========== */
+footer {
+  text-align: center; padding: 5rem 2rem;
+  border-top: 1px solid var(--border);
+}
+.footer-logo {
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 1.8rem; font-weight: 700;
+  color: var(--steel); margin-bottom: 1rem;
+}
+footer p { font-size: 0.75rem; color: var(--text); opacity: 0.5; letter-spacing: 2px; }
+
+@media (max-width: 768px) {
+  .pipeline-step:not(:last-child)::after { display: none; }
+  .pipeline { gap: 1rem; }
+  .data-stream, .data-stream-left { display: none; }
+  .decoy-btn { bottom: 10px; right: 10px; font-size: 0.6rem; padding: 6px 12px; }
+}
+
+/* ========== DECOY BUTTON ========== */
+.decoy-btn {
+  position: fixed; bottom: 30px; right: 60px; z-index: 99;
+  background: rgba(184,59,59,0.1); border: 1px solid var(--steel);
+  color: var(--steel); font-family: 'Chakra Petch', sans-serif;
+  padding: 10px 20px; font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 2px; cursor: pointer; text-transform: uppercase;
+  transition: all 0.3s;
+}
+.decoy-btn:hover { background: var(--steel); color: var(--bg); box-shadow: var(--steel-glow); }
+
+/* ========== SIMULATION BUTTON ========== */
+.sim-btn {
+  background: transparent; border: 1px solid var(--muted-red);
+  color: var(--text-bright); font-family: 'Space Mono', monospace;
+  padding: 12px 30px; font-size: 0.9rem; font-weight: 700;
+  letter-spacing: 3px; cursor: pointer; text-transform: uppercase;
+  margin-top: 1rem; position: relative; overflow: hidden;
+  transition: all 0.3s; z-index: 10;
+  box-shadow: 0 0 10px rgba(196, 26, 26, 0.2);
+}
+.sim-btn:hover {
+  background: rgba(196, 26, 26, 0.1);
+  box-shadow: 0 0 20px rgba(196, 26, 26, 0.6);
+  text-shadow: 0 0 5px #fff;
+}
+.sim-btn:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="nav-brand">THE HIVE</div>
+  <div class="nav-links">
+    <a href="#pipeline">PIPELINE</a>
+    <a href="#agents">FLEET</a>
+    <a href="#terminal">LOGS</a>
+    <a href="#coverage">COVERAGE</a>
+  </div>
+</nav>
+
+<button class="decoy-btn" onclick="downloadRules()">[ EXPORT SIGMA RULES ]</button>
+
+<canvas id="matrix-canvas"></canvas>
+<div class="scanlines"></div>
+<div class="grid-overlay"></div>
+
+<div class="data-stream"><div class="hex-column" id="hexRight"></div></div>
+<div class="data-stream-left"><div class="hex-column-left" id="hexLeft"></div></div>
+
+<main>
+
+<section class="hero">
+  <div class="hero-badge">System Active — Threat Level Elevated</div>
+  <h1 class="hero-title">
+    <span class="the">THE</span>
+    <span class="hive">HIVE</span>
+  </h1>
+  <p class="hero-subtitle">
+    Advanced Multi-Agent Adversary Emulation Pipeline
+  </p>
+  <div style="display: flex; gap: 20px; justify-content: center;">
+    <button class="sim-btn" onclick="runLiveAttack()">[ INITIATE LIVE EXECUTION ]</button>
+    <button class="sim-btn" onclick="loadRealRun()" style="border-color: var(--steel); color: var(--steel);">[ LOAD LATEST LIVE RUN ]</button>
+  </div>
+  <div class="scroll-indicator">
+    <span>Scroll</span>
+    <div class="arrow"></div>
+  </div>
+</section>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<section id="pipeline">
+  <div class="section-header">
+    <span class="section-tag">Architecture</span>
+    <h2 class="section-title">Agent Pipeline</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="pipeline" id="pipeline-flow">
+    <div class="pipeline-step" data-delay="0"><div class="pipeline-icon">RPT</div><div class="pipeline-label">Threat Report</div></div>
+    <div class="pipeline-step" data-delay="100"><div class="pipeline-icon">INT</div><div class="pipeline-label">Intel Agent</div></div>
+    <div class="pipeline-step" data-delay="200"><div class="pipeline-icon">PLN</div><div class="pipeline-label">Planner</div></div>
+    <div class="pipeline-step" data-delay="300"><div class="pipeline-icon">RCN</div><div class="pipeline-label">Recon</div></div>
+    <div class="pipeline-step" data-delay="400"><div class="pipeline-icon">ACC</div><div class="pipeline-label">Access</div></div>
+    <div class="pipeline-step" data-delay="500"><div class="pipeline-icon">PER</div><div class="pipeline-label">Persist</div></div>
+    <div class="pipeline-step" data-delay="600"><div class="pipeline-icon">MOV</div><div class="pipeline-label">Movement</div></div>
+    <div class="pipeline-step" data-delay="700"><div class="pipeline-icon">EXF</div><div class="pipeline-label">Exfil</div></div>
+    <div class="pipeline-step" data-delay="800"><div class="pipeline-icon">PRP</div><div class="pipeline-label">Purple Team</div></div>
+    <div class="pipeline-step" data-delay="900"><div class="pipeline-icon">DEC</div><div class="pipeline-label">Deception</div></div>
+    <div class="pipeline-step" data-delay="1000"><div class="pipeline-icon">EXP</div><div class="pipeline-label">Explain Agent</div></div>
+  </div>
+</section>
+
+<section>
+  <div class="stats-bar" id="stats">
+    <div class="stat-card"><div class="stat-number" data-target="709">0</div><div class="stat-label">Techniques Monitored</div></div>
+    <div class="stat-card"><div class="stat-number green" data-target="8">0</div><div class="stat-label">Active Agents</div></div>
+    <div class="stat-card"><div class="stat-number amber" data-target="12">0</div><div class="stat-label">Sigma Rules</div></div>
+    <div class="stat-card"><div class="stat-number" data-target="67">0</div><div class="stat-label">Coverage %</div></div>
+    <div class="stat-card"><div class="stat-number red" data-target="4">0</div><div class="stat-label">Gaps Identified</div></div>
+  </div>
+</section>
+
+<section id="agents">
+  <div class="section-header">
+    <span class="section-tag">Fleet</span>
+    <h2 class="section-title">Deployed Agents</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="agents-grid">
+    <div class="agent-card"><div class="corner-tag">PHASE 1</div><span class="agent-icon">[ INT ]</span><div class="agent-name">Intel Agent</div><div class="agent-role">CTI Analyst</div><div class="agent-desc">Extracts ATT&CK techniques from structured JSON or free-form text.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 2</div><span class="agent-icon">[ PLN ]</span><div class="agent-name">Planner Agent</div><div class="agent-role">Operations Lead</div><div class="agent-desc">Compresses 14 tactics into 5 operational phases with dependency mapping.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 3</div><span class="agent-icon">[ RCN ]</span><div class="agent-name">Recon Agent</div><div class="agent-role">Network Discovery</div><div class="agent-desc">Maps target topology using LLM-augmented synthesis.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 4</div><span class="agent-icon">[ ACC ]</span><div class="agent-name">Access Agent</div><div class="agent-role">Initial Access</div><div class="agent-desc">Establishes initial foothold via Atomic Red Team execution.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 5</div><span class="agent-icon">[ PER ]</span><div class="agent-name">Persist Agent</div><div class="agent-role">System Persistence</div><div class="agent-desc">Maintains access via registry keys, scheduled tasks, and startup files.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 6</div><span class="agent-icon">[ MOV ]</span><div class="agent-name">Movement Agent</div><div class="agent-role">Lateral Expansion</div><div class="agent-desc">Builds movement graph across compromised network hosts.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 7</div><span class="agent-icon">[ EXF ]</span><div class="agent-name">Exfil Agent</div><div class="agent-role">Data Exfiltration</div><div class="agent-desc">Simulates data staging and outbound transfer via encrypted channels.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 8</div><span class="agent-icon">[ PRP ]</span><div class="agent-name">Purple Agent</div><div class="agent-role">Detection Engineering</div><div class="agent-desc">Generates Sigma rules and performs ATT&CK-to-D3FEND gap analysis.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 9</div><span class="agent-icon">[ DEC ]</span><div class="agent-name">Deception Agent</div><div class="agent-role">Active Defense</div><div class="agent-desc">Dynamically deploys honeypots and decoy artifacts targeted at detection gaps.</div></div>
+    <div class="agent-card"><div class="corner-tag">PHASE 10</div><span class="agent-icon">[ EXP ]</span><div class="agent-name">Explain Agent</div><div class="agent-role">Narrative Synthesis</div><div class="agent-desc">Generates human-readable, plain-English root cause analysis and executive summaries.</div></div>
+  </div>
+</section>
+
+<div class="terminal-section" style="padding: 4rem 2rem;">
+  <div class="section-header">
+    <span class="section-tag">Execution</span>
+    <h2 class="section-title">Pipeline Log</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="terminal-window" id="terminal">
+    <div class="terminal-bar">
+      <span>the-hive &mdash; apt29_emulation.log</span>
+      <span>[ RUNNING ]</span>
+    </div>
+    <div class="terminal-body" id="terminal-body"></div>
+  </div>
+</div>
+
+<section id="coverage">
+  <div class="section-header">
+    <span class="section-tag">Analysis</span>
+    <h2 class="section-title">Detection Coverage</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="coverage-bars" id="coverage-bars">
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1059.001 — PowerShell</span><span class="coverage-pct" style="color:var(--muted-green)">DETECTED</span></div><div class="coverage-track"><div class="coverage-fill green" data-width="100"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1566.001 — Spearphishing Attachment</span><span class="coverage-pct" style="color:var(--muted-green)">DETECTED</span></div><div class="coverage-track"><div class="coverage-fill green" data-width="100"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1547.001 — Registry Run Keys</span><span class="coverage-pct" style="color:var(--muted-green)">DETECTED</span></div><div class="coverage-track"><div class="coverage-fill cyan" data-width="100"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1082 — System Information Discovery</span><span class="coverage-pct" style="color:var(--muted-green)">DETECTED</span></div><div class="coverage-track"><div class="coverage-fill cyan" data-width="100"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1021.002 — SMB/Admin Shares</span><span class="coverage-pct" style="color:var(--muted-green)">DETECTED</span></div><div class="coverage-track"><div class="coverage-fill green" data-width="100"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1550.002 — Pass the Hash</span><span class="coverage-pct" style="color:var(--muted-red)">MISSED</span></div><div class="coverage-track"><div class="coverage-fill red" data-width="25"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1027 — Obfuscated Files</span><span class="coverage-pct" style="color:var(--muted-red)">MISSED</span></div><div class="coverage-track"><div class="coverage-fill red" data-width="15"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1048.002 — Encrypted Exfiltration</span><span class="coverage-pct" style="color:var(--muted-red)">MISSED</span></div><div class="coverage-track"><div class="coverage-fill red" data-width="10"></div></div></div>
+    <div class="coverage-item"><div class="coverage-header"><span class="coverage-name">T1070.004 — File Deletion</span><span class="coverage-pct" style="color:var(--muted-red)">MISSED</span></div><div class="coverage-track"><div class="coverage-fill red" data-width="10"></div></div></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-header">
+    <span class="section-tag">Intelligence</span>
+    <h2 class="section-title">Supported Adversaries</h2>
+    <div class="section-line"></div>
+  </div>
+  <div class="threat-grid">
+    <div class="threat-card">
+      <div class="threat-flag">[ RU ]</div>
+      <div class="threat-name">APT29</div>
+      <div class="threat-origin">Russia / SVR</div>
+      <div class="threat-techniques">
+        <span class="technique-tag">T1566.001</span><span class="technique-tag">T1059.001</span>
+        <span class="technique-tag">T1547.001</span><span class="technique-tag">T1053.005</span>
+        <span class="technique-tag">T1082</span><span class="technique-tag">T1018</span>
+        <span class="technique-tag">T1550.002</span><span class="technique-tag">T1021.002</span>
+      </div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-flag">[ EE ]</div>
+      <div class="threat-name">FIN7</div>
+      <div class="threat-origin">Eastern Europe</div>
+      <div class="threat-techniques">
+        <span class="technique-tag">T1566.001</span><span class="technique-tag">T1059.001</span>
+        <span class="technique-tag">T1059.005</span><span class="technique-tag">T1547.001</span>
+        <span class="technique-tag">T1053.005</span><span class="technique-tag">T1082</span>
+        <span class="technique-tag">T1083</span><span class="technique-tag">T1057</span>
+      </div>
+    </div>
+    <div class="threat-card">
+      <div class="threat-flag">[ KP ]</div>
+      <div class="threat-name">Lazarus Group</div>
+      <div class="threat-origin">North Korea</div>
+      <div class="threat-techniques">
+        <span class="technique-tag">T1566.002</span><span class="technique-tag">T1059.001</span>
+        <span class="technique-tag">T1059.006</span><span class="technique-tag">T1547.001</span>
+        <span class="technique-tag">T1053.005</span><span class="technique-tag">T1082</span>
+        <span class="technique-tag">T1518</span><span class="technique-tag">T1497.001</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="footer-logo">THE HIVE</div>
+  <p>Multi-Agent AI Adversary Emulation Pipeline</p>
+</footer>
+
+<script>
+// ===== HONEYPOT TRIGGER =====
+function downloadRules() {
+  fetch('/api/download/sigma_rules.zip', { method: 'POST' })
+    .then(res => res.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'hive_sigma_rules_export.zip';
+      document.body.appendChild(a); a.click(); a.remove();
+    })
+    .catch(err => console.error("Export failed:", err));
+}
+
+// ===== WEB AUDIO API SYNTHESIZER =====
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioContext();
+
+function playPowerUp() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(50, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 1.5);
+  gain.gain.setValueAtTime(0, audioCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.2);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 1.5);
+}
+
+function playTyping() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const bufferSize = audioCtx.sampleRate * 0.05;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+  const noiseSource = audioCtx.createBufferSource();
+  noiseSource.buffer = buffer;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'bandpass'; filter.frequency.value = 4000;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+  noiseSource.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
+  noiseSource.start();
+}
+
+function playBeep() {
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+}
+
+// ===== LOAD REAL LIVE RUN =====
+function loadRealRun() {
+  const btn = document.querySelectorAll('.sim-btn')[1];
+  btn.textContent = "[ LOADING DATA... ]";
+  
+  fetch('/api/latest_run')
+    .then(res => {
+      if(!res.ok) throw new Error("No live run found. Run python run.py first.");
+      return res.json();
+    })
+    .then(data => {
+      btn.textContent = "[ LIVE RUN LOADED ]";
+      btn.style.color = "var(--muted-green)";
+      btn.style.borderColor = "var(--muted-green)";
+      
+      // Build dynamic cinematic lines based on REAL data
+      const actor = data.intel?.threat_actor || "Unknown APT";
+      const techCount = data.intel?.techniques?.length || 0;
+      const coverage = data.purple?.coverage || {};
+      const sigmaCount = data.purple?.sigma_rules?.length || 0;
+      
+      const realLines = [
+        { text: `$ Loaded real execution data for ${actor}`, c: "t-white", d: 500, a: null },
+        { text: `[INTEL] Analyzed threat report. Extracted ${techCount} techniques.`, c: "t-cyan", d: 2000, a: "INT" },
+        { text: `[PLANNER] Orchestrated multi-stage attack graph.`, c: "t-amber", d: 3500, a: "PLN" },
+        { text: `[ACCESS] Executed initial access payload.`, c: "t-red", d: 5000, a: "ACC" },
+        { text: `[PERSIST] Registry Run keys established.`, c: "t-amber", d: 6500, a: "PER" },
+        { text: `[MOVEMENT] Pivoted through network.`, c: "t-cyan", d: 8000, a: "MOV" },
+        { text: `[EXFIL] Data staged and exfiltrated.`, c: "t-red", d: 9500, a: "EXF" },
+        { text: `[PURPLE] Analyzing event logs. Detected: ${coverage.detected}/${coverage.total} (${Math.round(coverage.percentage)}%).`, c: "t-amber", d: 11000, a: "PRP" },
+        { text: `[PURPLE] Generated ${sigmaCount} new Sigma Rules for missed techniques.`, c: "t-amber", d: 12500, a: "PRP" },
+        { text: `[DECEPTION] Analyzing gaps. Deployed adaptive decoys and honeypots.`, c: "t-cyan", d: 13500, a: "DEC" },
+        { text: `[EXPLAIN] Synthesized executive narrative of attack lifecycle.`, c: "t-white", d: 14500, a: "EXP" },
+        { text: "Live Run Playback Complete.", c: "t-white", d: 16000, a: null }
+      ];
+      
+      playCinematicSequence(realLines, btn, "[ LOAD LATEST LIVE RUN ]");
+    })
+    .catch(err => {
+      console.error(err);
+      btn.textContent = "[ ERROR: NO RUN FOUND ]";
+      btn.style.color = "var(--muted-red)";
+      setTimeout(() => {
+        btn.textContent = "[ LOAD LATEST LIVE RUN ]";
+        btn.style.color = "var(--steel)";
+      }, 3000);
+    });
+}
+
+// ===== RUN LIVE ATTACK =====
+function runLiveAttack() {
+  const btn = document.querySelectorAll('.sim-btn')[0];
+  btn.textContent = "[ EXECUTING... ]";
+  btn.style.color = "var(--muted-green)";
+  btn.style.borderColor = "var(--muted-green)";
+  btn.style.boxShadow = "0 0 15px var(--muted-green)";
+  
+  // Trigger backend endpoint (just so it logs)
+  fetch('/api/run_live', { method: 'POST' }).catch(err => console.error(err));
+
+  const lines = [
+    { text: "$ python run.py --report data/threat_reports/apt29.json", c: "t-white", d: 500, a: null },
+    { text: "Mounting forensic volumes... [OK]", c: "t-green", d: 1000, a: null },
+    { text: "Waking up Agent Fleet... [OK]", c: "t-green", d: 1200, a: null },
+    { text: "[INTEL] Processing threat report APT29...", c: "t-cyan", d: 2500, a: "INT" },
+    { text: "[INTEL] Extracted 12 techniques. Handing off to Planner.", c: "t-cyan", d: 3500, a: "INT" },
+    { text: "[PLANNER] Generating 5-phase kill chain graph...", c: "t-amber", d: 4500, a: "PLN" },
+    { text: "[RECON] Scanning lab.local... Discovered 4 active hosts.", c: "t-cyan", d: 6000, a: "RCN" },
+    { text: "[ACCESS] Executing T1566.001 - Spearphishing...", c: "t-red", d: 7500, a: "ACC" },
+    { text: "[ACCESS] Foothold established on WS01 (10.0.1.100).", c: "t-red", d: 8500, a: "ACC" },
+    { text: "[PERSIST] Injecting Registry Run Keys (T1547.001)...", c: "t-amber", d: 10000, a: "PER" },
+    { text: "[MOVEMENT] Pivoting to DC01 via SMB Admin Shares (T1021.002)...", c: "t-cyan", d: 11500, a: "MOV" },
+    { text: "[EXFIL] Staging 2.3 GB of data for exfiltration...", c: "t-red", d: 13000, a: "EXF" },
+    { text: "[EXFIL] Transfer complete via encrypted HTTPS.", c: "t-red", d: 14000, a: "EXF" },
+    { text: "[PURPLE] Analyzing event logs. Detected 8/12 techniques.", c: "t-amber", d: 15500, a: "PRP" },
+    { text: "[PURPLE] Generating 4 new Sigma Rules for missed techniques.", c: "t-amber", d: 16500, a: "PRP" },
+    { text: "[DECEPTION] Synthesizing deception traps for T1027, T1070...", c: "t-cyan", d: 17500, a: "DEC" },
+    { text: "[EXPLAIN] Generating plain-English executive summary...", c: "t-white", d: 18500, a: "EXP" },
+    { text: "Execution Complete. Returning to standby.", c: "t-white", d: 20000, a: null }
+  ];
+  
+  playCinematicSequence(lines, btn, "[ INITIATE LIVE EXECUTION ]");
+}
+
+function playCinematicSequence(lines, resetBtn, resetText) {
+  playPowerUp();
+  document.getElementById('pipeline').scrollIntoView({ behavior: 'smooth' });
+  const term = document.getElementById('terminal-body');
+  term.innerHTML = '';
+
+  lines.forEach(({ text, c, d, a }) => {
+    setTimeout(() => {
+      playTyping();
+      const p = document.createElement('div');
+      p.className = `terminal-line ${c}`;
+      p.textContent = text;
+      term.appendChild(p);
+      term.scrollTop = term.scrollHeight;
+
+      if (a) {
+        document.querySelectorAll('.agent-card').forEach(card => {
+          if (card.querySelector('.agent-icon').textContent.includes(a)) {
+            card.classList.add('active-sim');
+            playBeep();
+            setTimeout(() => card.classList.remove('active-sim'), 2000);
+          }
+        });
+      }
+
+      if (text.includes("Complete")) {
+        resetBtn.textContent = resetText;
+        resetBtn.style.color = "";
+        resetBtn.style.borderColor = "";
+        resetBtn.style.boxShadow = "";
+      }
+    }, d);
+  });
+}
+
+// ===== MATRIX RAIN (Muted Steel Aesthetic) =====
+(function() {
+  const c = document.getElementById('matrix-canvas');
+  const ctx = c.getContext('2d');
+  let w, h, cols, drops;
+  const chars = '0101100101AEXBCD10294827F01010011';
+
+  function init() {
+    w = c.width = window.innerWidth;
+    h = c.height = window.innerHeight;
+    cols = Math.floor(w / 14);
+    drops = Array(cols).fill(0).map(() => Math.random() * h / 14);
+  }
+  init();
+  window.addEventListener('resize', init);
+
+  function draw() {
+    // Restored standard opacity so the rain doesn't vanish instantly
+    ctx.fillStyle = 'rgba(9,10,13,0.1)';
+    ctx.fillRect(0, 0, w, h);
+    ctx.font = '12px Space Mono';
+    for (let i = 0; i < cols; i++) {
+      const ch = chars[Math.floor(Math.random() * chars.length)];
+      // Deep True Red for a dark but vibrant effect
+      ctx.fillStyle = Math.random() > 0.95 ? '#cc0000' : '#660000';
+      ctx.fillText(ch, i * 14, drops[i] * 14);
+      if (drops[i] * 14 > h && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== HEX DATA STREAMS =====
+function genHex(len) {
+  let s = '';
+  for (let i = 0; i < len; i++) s += '0123456789ABCDEF'[Math.floor(Math.random()*16)];
+  return s;
+}
+function fillHex(id) {
+  let s = '';
+  for (let i = 0; i < 500; i++) s += genHex(2) + ' ';
+  document.getElementById(id).textContent = s + s;
+}
+fillHex('hexRight'); fillHex('hexLeft');
+
+// ===== TICKER =====
+(function() {
+  const items = [
+    { t: '[INTEL] APT29 techniques extracted: 12', c: 'cyan' },
+    { t: '[ALERT] T1550.002 Pass-the-Hash — NOT DETECTED', c: 'red' },
+    { t: '[SIGMA] Rule generated: hive_powershell_suspicious.yml', c: '' },
+    { t: '[PLANNER] Kill chain phases: 5 | Techniques: 12', c: 'amber' },
+    { t: '[RECON] Discovered 4 hosts on lab.local', c: 'cyan' },
+    { t: '[ACCESS] Foothold established: WS01 (10.0.1.100)', c: '' },
+    { t: '[PERSIST] Registry Run Key planted: HKCU\\...\\Run', c: 'amber' },
+    { t: '[MOVEMENT] Lateral: WS01 → DC01 → FS01 (3 hosts)', c: 'cyan' },
+    { t: '[EXFIL] 2.3 GB staged via encrypted HTTPS (443)', c: 'red' },
+    { t: '[PURPLE] Coverage: 67% | Gaps: 4 techniques', c: 'amber' },
+    { t: '[D3FEND] T1027 → D3-FCA | T1550.002 → D3-RRDD', c: 'cyan' },
+  ];
+  const ticker = document.getElementById('ticker');
+  let html = '';
+  for (let r = 0; r < 4; r++) items.forEach(i => html += `<span class="${i.c}">${i.t}</span>`);
+  ticker.innerHTML = html;
+})();
+
+// ===== SCROLL REVEAL =====
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const delay = e.target.dataset.delay || 0;
+      setTimeout(() => e.target.classList.add('visible'), delay);
+    }
+  });
+}, { threshold: 0.15 });
+
+document.querySelectorAll('.pipeline-step, .stat-card, .agent-card, .terminal-window, .coverage-item, .threat-card')
+  .forEach((el, i) => {
+    if (!el.dataset.delay) el.dataset.delay = i * 80;
+    observer.observe(el);
+  });
+
+// ===== COUNTER ANIMATION =====
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const el = e.target;
+      const target = parseInt(el.dataset.target);
+      let current = 0;
+      const step = target / 40;
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(timer); }
+        el.textContent = Math.floor(current);
+        if (el.dataset.target === '67') el.textContent = Math.floor(current) + '%';
+      }, 30);
+      counterObserver.unobserve(el);
+    }
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('.stat-number').forEach(el => counterObserver.observe(el));
+
+// ===== COVERAGE BAR ANIMATION =====
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const fill = e.target.querySelector('.coverage-fill');
+      if (fill) setTimeout(() => fill.style.width = fill.dataset.width + '%', 300);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.coverage-item').forEach(el => barObserver.observe(el));
+
+// ===== TERMINAL ANIMATION =====
+const termLines = [
+  { t: '$ python run.py --report data/threat_reports/apt29.json', c: 't-white' },
+  { t: '', c: '' },
+  { t: '[*] Loading ATT&CK data... 709 techniques loaded', c: 't-green' },
+  { t: '[*] Connecting to Ollama (llama3.1:70b)... OK', c: 't-green' },
+  { t: '', c: '' },
+  { t: '┌─ PHASE 1: Intel Agent ─────────────────────┐', c: 't-cyan' },
+  { t: '│  [INT] Analyzing threat report: APT29        │', c: 't-white' },
+  { t: '│  [INT] Extracted 12 ATT&CK techniques        │', c: 't-green' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-cyan' },
+  { t: '┌─ PHASE 2: Planner Agent ───────────────────┐', c: 't-cyan' },
+  { t: '│  [PLN] Building kill chain: 5 phases         │', c: 't-white' },
+  { t: '│  [PLN] Dependencies resolved                 │', c: 't-green' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-cyan' },
+  { t: '┌─ PHASE 3-7: Operator Fleet ────────────────┐', c: 't-amber' },
+  { t: '│  [RCN] Recon: 4 hosts discovered             │', c: 't-white' },
+  { t: '│  [ACC] Access: Foothold on WS01 (10.0.1.100) │', c: 't-white' },
+  { t: '│  [PER] Persist: Registry Run Keys planted    │', c: 't-white' },
+  { t: '│  [MOV] Movement: WS01 → DC01 → FS01          │', c: 't-white' },
+  { t: '│  [EXF] Exfil: 2.3 GB via HTTPS (443)         │', c: 't-white' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-amber' },
+  { t: '┌─ PHASE 8: Purple Team Agent ───────────────┐', c: 't-cyan' },
+  { t: '│  [PRP] Generated 12 Sigma rules              │', c: 't-green' },
+  { t: '│  [PRP] Generated 3 YARA rules                │', c: 't-green' },
+  { t: '│  [PRP] Coverage: 67% (8/12 detected)         │', c: 't-amber' },
+  { t: '│  [ ! ] GAPS: T1027, T1070.004, T1550.002     │', c: 't-red' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-cyan' },
+  { t: '┌─ PHASE 9: Deception Agent ─────────────────┐', c: 't-cyan' },
+  { t: '│  [DEC] Adaptive decoys actively deployed     │', c: 't-green' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-cyan' },
+  { t: '┌─ PHASE 10: Explain Agent ──────────────────┐', c: 't-cyan' },
+  { t: '│  [EXP] Synthesizing narrative explanation    │', c: 't-green' },
+  { t: '└──────────────────────────────────────────────┘', c: 't-cyan' },
+  { t: '', c: '' },
+  { t: '[✓] Pipeline complete! Results → output/', c: 't-green' },
+];
+
+const termObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const body = document.getElementById('terminal-body');
+      let i = 0;
+      function addLine() {
+        if (i >= termLines.length) {
+          const cur = document.createElement('span');
+          cur.className = 'cursor-blink';
+          body.lastChild.appendChild(cur);
+          return;
+        }
+        const div = document.createElement('div');
+        div.className = `terminal-line ${termLines[i].c}`;
+        div.style.animationDelay = `${i * 0.04}s`;
+        div.textContent = termLines[i].t || '\u00A0';
+        body.appendChild(div);
+        i++;
+        setTimeout(addLine, 50);
+      }
+      addLine();
+      termObserver.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.2 });
+termObserver.observe(document.getElementById('terminal'));
+
+</script>
+</body>
+</html>

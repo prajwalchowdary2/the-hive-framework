@@ -1,0 +1,41 @@
+# The Hive - VM Sandbox Configuration Override
+# ============================================
+
+# LLM Settings
+model: "llama3.3:70b"
+ollama_base_url: "http://localhost:11434"
+temperature: 0.3
+max_tokens: 4096
+
+# Paths
+output_dir: "./output"
+attck_data_path: "./data/attck_data/enterprise-attack.json"
+atomic_red_team_path: "C:\\atomic-red-team\\atomics" # VM-local path to prevent host Defender alerts!
+threat_reports_dir: "./data/threat_reports"
+
+# Execution Settings
+execute_atomics: true          
+safe_mode: false                
+max_techniques_per_phase: 5    
+
+# Logging
+log_level: "INFO"
+log_file: "./output/hive.log"
+
+# Target Environment (for simulation context)
+target_environment:
+  os: "windows"
+  domain: "lab.local"
+  hosts:
+    - name: "WS01"
+      role: "workstation"
+      os: "Windows 11"
+    - name: "DC01"
+      role: "domain_controller"
+      os: "Windows Server 2022"
+    - name: "FS01"
+      role: "file_server"
+      os: "Windows Server 2022"
+    - name: "DB01"
+      role: "database_server"
+      os: "Windows Server 2022"
