@@ -112,6 +112,13 @@ The Hive is designed **privacy-first** to run entirely on local LLMs via **Ollam
 
 ---
 
+## 👥 Authors
+
+* **Prajwal Chowdary** - [GitHub](https://github.com/prajwalchowdary2)
+* **Pradeep Kumar**
+
+---
+
 ## 📄 License
 
 This project is open-source under the [MIT License](LICENSE). 
