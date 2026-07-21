@@ -96,9 +96,9 @@ Dr. Sapna VM is a Professor in the Department of Computer Science and Engineerin
 Prajwal Chowdary is a cybersecurity researcher and student at PES University, specializing in AI-driven offensive security automation and multi-agent systems. He is the lead architect and developer behind "The Hive," focusing on combining local open-weights LLMs with deterministic safety guardrails for automated purple teaming.
 ```
 
-### Co-Author: Pradeep Kumar (Research Assistant)
+### Co-Author: Vinaykumar (Research Assistant)
 ```text
-Pradeep Kumar is a Research Assistant at PES University focusing on adversary emulation, threat intelligence, and detection engineering. His research centers on modeling APT behaviors, execution telemetry analysis, and the automated synthesis of defensive rules (Sigma/YARA).
+Vinaykumar is a Research Assistant at PES University focusing on adversary emulation, threat intelligence, and detection engineering. His research centers on modeling APT behaviors, execution telemetry analysis, and the automated synthesis of defensive rules (Sigma/YARA).
 ```
 
 ### Co-Author: Dr. Prasad B Honnavalli (Research Advisor)

@@ -116,7 +116,7 @@ The Hive is designed **privacy-first** to run entirely on local LLMs via **Ollam
 
 * **Sapna VM**
 * **Prajwal Chowdary** - [GitHub](https://github.com/prajwalchowdary2)
-* **Pradeep Kumar**
+* **Vinaykumar**
 * **Prasad HB**
 
 ---
