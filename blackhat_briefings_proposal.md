@@ -101,7 +101,7 @@ Prajwal Chowdary is a cybersecurity researcher and student at PES University, sp
 Pradeep Kumar is a Research Assistant at PES University focusing on adversary emulation, threat intelligence, and detection engineering. His research centers on modeling APT behaviors, execution telemetry analysis, and the automated synthesis of defensive rules (Sigma/YARA).
 ```
 
-### Co-Author: Dr. Prasad B Honnavalli (Research Advisor)
+### Prasad H B (Professor)
 ```text
-Dr. Prasad B Honnavalli is a Professor and Director of the Center for Data Capabilities and Systems Studies at PES University. His research spans cloud security, distributed systems, and advanced AI architectures. He serves as an advisor on research projects focused on autonomous cyber defense mechanisms.
+Prasad H B is a Professor in the Department of Computer Science & Engineering at PES University, Bangalore, India. His research interests include distributed systems, cloud security, and AI safety architectures. He previously presented at Black Hat Asia 2026 (Arsenal) and is scheduled to present at SecTor 2026.
 ```
